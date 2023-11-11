@@ -1,86 +1,69 @@
 use crate::bitboard::{BitBoard, EMPTY};
 use lazy_static::lazy_static;
 
-lazy_static! {
-    pub static ref BISHOP_MOVES: [BitBoard; 64] = init_bishop_moves();
-}
-
-fn init_bishop_moves() -> [BitBoard; 64] {
-    let mut moves = [EMPTY; 64];
-    for i in 0..64 {
-        moves[i as usize] = all_bishop_moves(BitBoard::from_index(i));
-    }
-    moves
-}
-
-fn all_bishop_moves(bishop_bitboard: BitBoard) -> BitBoard {
+pub fn get_rook_moves(rook_bitboard: BitBoard, blockers: BitBoard) -> BitBoard {
     let mut moves = EMPTY;
 
-    let mut up_right = bishop_bitboard;
-    while up_right.get_rank() < 7 && up_right.get_file() < 7 {
-        up_right = up_right.shift_up().shift_right();
-        moves |= up_right;
+    let mut up = rook_bitboard;
+    while up.get_rank() < 7 {
+        up = up.shift_up();
+        moves |= up;
+        if up & blockers != EMPTY {
+            break;
+        }
     }
 
-    let mut up_left = bishop_bitboard;
-    while up_left.get_rank() < 7 && up_left.get_file() > 0 {
-        up_left = up_left.shift_up().shift_left();
-        moves |= up_left;
+    let mut down = rook_bitboard;
+    while down.get_rank() > 0 {
+        down = down.shift_down();
+        moves |= down;
+        if down & blockers != EMPTY {
+            break;
+        }
     }
 
-    let mut down_right = bishop_bitboard;
-    while down_right.get_rank() > 0 && down_right.get_file() < 7 {
-        down_right = down_right.shift_down().shift_right();
-        moves |= down_right;
+    let mut right = rook_bitboard;
+    while right.get_file() < 7 {
+        right = right.shift_right();
+        moves |= right;
+        if right & blockers != EMPTY {
+            break;
+        }
     }
 
-    let mut down_left = bishop_bitboard;
-    while down_left.get_rank() > 0 && down_left.get_file() > 0 {
-        down_left = down_left.shift_down().shift_left();
-        moves |= down_left;
+    let mut left = rook_bitboard;
+    while left.get_file() > 0 {
+        left = left.shift_left();
+        moves |= left;
+        if left & blockers != EMPTY {
+            break;
+        }
     }
 
     moves
 }
 
-pub fn generate_blocked_moves(bishop_bitboard: BitBoard, blockers: BitBoard) -> BitBoard {
-    let mut moves = EMPTY;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let mut up_right = bishop_bitboard;
-    while up_right.get_rank() < 7 && up_right.get_file() < 7 {
-        up_right = up_right.shift_up().shift_right();
-        moves |= up_right;
-        if up_right & blockers != EMPTY {
-            break;
-        }
+    #[test]
+    fn test_get_rook_moves() {
+        let rook_bitboard = BitBoard::from_index(35);
+        let blockers = BitBoard::from_index(34) | BitBoard::from_index(27);
+        let moves = get_rook_moves(rook_bitboard, blockers);
+
+        // All moves should be
+        let expected = BitBoard::from_index(27)
+            | BitBoard::from_index(34)
+            | BitBoard::from_index(36)
+            | BitBoard::from_index(37)
+            | BitBoard::from_index(38)
+            | BitBoard::from_index(39)
+            | BitBoard::from_index(43)
+            | BitBoard::from_index(51)
+            | BitBoard::from_index(59);
+
+        assert_eq!(moves, expected);
     }
-
-    let mut up_left = bishop_bitboard;
-    while up_left.get_rank() < 7 && up_left.get_file() > 0 {
-        up_left = up_left.shift_up().shift_left();
-        moves |= up_left;
-        if up_left & blockers != EMPTY {
-            break;
-        }
-    }
-
-    let mut down_right = bishop_bitboard;
-    while down_right.get_rank() > 0 && down_right.get_file() < 7 {
-        down_right = down_right.shift_down().shift_right();
-        moves |= down_right;
-        if down_right & blockers != EMPTY {
-            break;
-        }
-    }
-
-    let mut down_left = bishop_bitboard;
-    while down_left.get_rank() > 0 && down_left.get_file() > 0 {
-        down_left = down_left.shift_down().shift_left();
-        moves |= down_left;
-        if down_left & blockers != EMPTY {
-            break;
-        }
-    }
-
-    moves
 }

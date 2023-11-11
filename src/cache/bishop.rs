@@ -1,57 +1,68 @@
 use crate::bitboard::{BitBoard, EMPTY};
 use lazy_static::lazy_static;
 
-lazy_static! {
-    pub static ref PAWN_MOVES: [[BitBoard; 64]; 2] = init_pawn_moves();
-    pub static ref PAWN_ATTACKS: [[BitBoard; 64]; 2] = init_pawn_attacks();
-}
-
-fn init_pawn_moves() -> [[BitBoard; 64]; 2] {
-    let mut moves = [[EMPTY; 64]; 2];
-    for i in 0..64 {
-        moves[0][i as usize] = all_pawn_moves(BitBoard::from_index(i), false);
-        moves[1][i as usize] = all_pawn_moves(BitBoard::from_index(i), true);
-    }
-    moves
-}
-
-fn init_pawn_attacks() -> [[BitBoard; 64]; 2] {
-    let mut moves = [[EMPTY; 64]; 2];
-    for i in 0..64 {
-        moves[0][i as usize] = all_pawn_attacks(BitBoard::from_index(i), false);
-        moves[1][i as usize] = all_pawn_attacks(BitBoard::from_index(i), true);
-    }
-    moves
-}
-
-fn all_pawn_moves(pawn_bitboard: BitBoard, color: bool) -> BitBoard {
+pub fn get_bishop_moves(bishop_bitboard: BitBoard, blockers: BitBoard) -> BitBoard {
     let mut moves = EMPTY;
 
-    if color {
-        moves |= pawn_bitboard.shift_up();
-        if pawn_bitboard.get_rank() == 1 {
-            moves |= pawn_bitboard.shift_up().shift_up();
-        }
-    } else {
-        moves |= pawn_bitboard.shift_down();
-        if pawn_bitboard.get_rank() == 6 {
-            moves |= pawn_bitboard.shift_down().shift_down();
+    let mut up_right = bishop_bitboard;
+    while up_right.get_rank() < 7 && up_right.get_file() < 7 {
+        up_right = up_right.shift_up().shift_right();
+        moves |= up_right;
+        if up_right & blockers != EMPTY {
+            break;
         }
     }
 
-    moves
-}
+    let mut up_left = bishop_bitboard;
+    while up_left.get_rank() < 7 && up_left.get_file() > 0 {
+        up_left = up_left.shift_up().shift_left();
+        moves |= up_left;
+        if up_left & blockers != EMPTY {
+            break;
+        }
+    }
 
-fn all_pawn_attacks(pawn_bitboard: BitBoard, color: bool) -> BitBoard {
-    let mut moves = EMPTY;
+    let mut down_right = bishop_bitboard;
+    while down_right.get_rank() > 0 && down_right.get_file() < 7 {
+        down_right = down_right.shift_down().shift_right();
+        moves |= down_right;
+        if down_right & blockers != EMPTY {
+            break;
+        }
+    }
 
-    if color {
-        moves |= pawn_bitboard.shift_up().shift_right();
-        moves |= pawn_bitboard.shift_up().shift_left();
-    } else {
-        moves |= pawn_bitboard.shift_down().shift_right();
-        moves |= pawn_bitboard.shift_down().shift_left();
+    let mut down_left = bishop_bitboard;
+    while down_left.get_rank() > 0 && down_left.get_file() > 0 {
+        down_left = down_left.shift_down().shift_left();
+        moves |= down_left;
+        if down_left & blockers != EMPTY {
+            break;
+        }
     }
 
     moves
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_bishop_moves() {
+        let bishop_bitboard = BitBoard::from_index(35);
+        let blockers = BitBoard::from_index(28) | BitBoard::from_index(42);
+        let moves = get_bishop_moves(bishop_bitboard, blockers);
+
+        // All moves should be
+        let expected = BitBoard::from_index(8)
+            | BitBoard::from_index(17)
+            | BitBoard::from_index(26)
+            | BitBoard::from_index(28)
+            | BitBoard::from_index(42)
+            | BitBoard::from_index(44)
+            | BitBoard::from_index(53)
+            | BitBoard::from_index(62);
+
+        assert_eq!(moves, expected);
+    }
 }

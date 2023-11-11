@@ -1,13 +1,16 @@
 use crate::bitboard::{BitBoard, EMPTY};
+use lazy_static::lazy_static;
 
-static mut KNIGHT_MOVES: [BitBoard; 64] = [EMPTY; 64];
+lazy_static! {
+    pub static ref KNIGHT_MOVES: [BitBoard; 64] = init_knight_moves();
+}
 
-pub fn init_knight_moves() {
-    for i in 0_u8..64_u8 {
-        unsafe {
-            KNIGHT_MOVES[i] = all_knight_moves(BitBoard::from_index(i));
-        }
+fn init_knight_moves() -> [BitBoard; 64] {
+    let mut moves = [EMPTY; 64];
+    for i in 0..64 {
+        moves[i as usize] = all_knight_moves(BitBoard::from_index(i));
     }
+    moves
 }
 
 fn all_knight_moves(knight_bitboard: BitBoard) -> BitBoard {
