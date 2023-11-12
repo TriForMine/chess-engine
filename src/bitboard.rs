@@ -80,31 +80,20 @@ impl BitBoard {
     }
 
     #[inline(always)]
-    pub fn shift_down(&self) -> Self {
-        BitBoard {
-            board: self.board >> 8,
-        }
+    pub fn shift_down(&mut self) {
+        self.board >>= 8;
     }
-
     #[inline(always)]
-    pub fn shift_up(&self) -> Self {
-        BitBoard {
-            board: self.board << 8,
-        }
+    pub fn shift_up(&mut self) {
+        self.board <<= 8;
     }
-
     #[inline(always)]
-    pub fn shift_left(&self) -> Self {
-        BitBoard {
-            board: self.board >> 1,
-        }
+    pub fn shift_left(&mut self) {
+        self.board >>= 1;
     }
-
     #[inline(always)]
-    pub fn shift_right(&self) -> Self {
-        BitBoard {
-            board: self.board << 1,
-        }
+    pub fn shift_right(&mut self) {
+        self.board <<= 1;
     }
 
     pub fn get_board(&self) -> u64 {

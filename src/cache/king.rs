@@ -17,31 +17,47 @@ fn all_king_moves(king_bitboard: BitBoard) -> BitBoard {
     let mut moves = EMPTY;
 
     if king_bitboard.get_rank() < 7 {
-        moves |= king_bitboard.shift_up();
+        let mut up = king_bitboard;
+        up.shift_up();
+        moves |= up;
         if king_bitboard.get_file() < 7 {
-            moves |= king_bitboard.shift_up().shift_right();
+            let mut up_right = up;
+            up_right.shift_right();
+            moves |= up_right;
         }
         if king_bitboard.get_file() > 0 {
-            moves |= king_bitboard.shift_up().shift_left();
+            let mut up_left = up;
+            up_left.shift_left();
+            moves |= up_left;
         }
     }
 
     if king_bitboard.get_rank() > 0 {
-        moves |= king_bitboard.shift_down();
+        let mut down = king_bitboard;
+        down.shift_down();
+        moves |= down;
         if king_bitboard.get_file() < 7 {
-            moves |= king_bitboard.shift_down().shift_right();
+            let mut down_right = down;
+            down_right.shift_right();
+            moves |= down_right;
         }
         if king_bitboard.get_file() > 0 {
-            moves |= king_bitboard.shift_down().shift_left();
+            let mut down_left = down;
+            down_left.shift_left();
+            moves |= down_left;
         }
     }
 
     if king_bitboard.get_file() < 7 {
-        moves |= king_bitboard.shift_right();
+        let mut right = king_bitboard;
+        right.shift_right();
+        moves |= right;
     }
 
     if king_bitboard.get_file() > 0 {
-        moves |= king_bitboard.shift_left();
+        let mut left = king_bitboard;
+        left.shift_left();
+        moves |= left;
     }
 
     moves

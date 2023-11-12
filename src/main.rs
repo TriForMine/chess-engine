@@ -14,5 +14,5 @@ mod piece;
 fn main() {
     let mut engine = Engine::new();
 
-    let m = engine.play();
+    let m = engine.run();
 }

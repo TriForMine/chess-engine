@@ -28,14 +28,22 @@ fn all_pawn_moves(pawn_bitboard: BitBoard, color: bool) -> BitBoard {
     let mut moves = EMPTY;
 
     if color {
-        moves |= pawn_bitboard.shift_up();
+        let mut up = pawn_bitboard;
+        up.shift_up();
+        moves |= up;
         if pawn_bitboard.get_rank() == 1 {
-            moves |= pawn_bitboard.shift_up().shift_up();
+            let mut up_up = up;
+            up_up.shift_up();
+            moves |= up_up;
         }
     } else {
-        moves |= pawn_bitboard.shift_down();
+        let mut down = pawn_bitboard;
+        down.shift_down();
+        moves |= down;
         if pawn_bitboard.get_rank() == 6 {
-            moves |= pawn_bitboard.shift_down().shift_down();
+            let mut down_down = down;
+            down_down.shift_down();
+            moves |= down_down;
         }
     }
 
@@ -47,17 +55,29 @@ fn all_pawn_attacks(pawn_bitboard: BitBoard, color: bool) -> BitBoard {
 
     if color {
         if pawn_bitboard.get_file() < 7 {
-            moves |= pawn_bitboard.shift_up().shift_right();
+            let mut up_right = pawn_bitboard;
+            up_right.shift_up();
+            up_right.shift_right();
+            moves |= up_right;
         }
         if pawn_bitboard.get_file() > 0 {
-            moves |= pawn_bitboard.shift_up().shift_left();
+            let mut up_left = pawn_bitboard;
+            up_left.shift_up();
+            up_left.shift_left();
+            moves |= up_left;
         }
     } else {
         if pawn_bitboard.get_file() < 7 {
-            moves |= pawn_bitboard.shift_down().shift_right();
+            let mut down_right = pawn_bitboard;
+            down_right.shift_down();
+            down_right.shift_right();
+            moves |= down_right;
         }
         if pawn_bitboard.get_file() > 0 {
-            moves |= pawn_bitboard.shift_down().shift_left();
+            let mut down_left = pawn_bitboard;
+            down_left.shift_down();
+            down_left.shift_left();
+            moves |= down_left;
         }
     }
 

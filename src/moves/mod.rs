@@ -14,7 +14,7 @@ pub fn filter_check_moves(board: &Board, moves: Vec<Move>) -> Vec<Move> {
     for m in moves {
         let mut board_copy = board.clone();
         board_copy.make_move(m);
-        if !board_copy.is_check(board_copy.turn) {
+        if !board_copy.is_check(board.turn) {
             filtered_moves.push(m);
         }
     }

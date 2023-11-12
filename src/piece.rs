@@ -105,25 +105,25 @@ impl Piece {
         }
     }
 
-    pub fn get_score(&self, coord: Coord, turn: bool) -> i16 {
+    pub fn get_score(&self, coord: Coord) -> i16 {
         match self.piece {
             PieceEnum::Pawn => {
-                PAWN_SCORE[if turn == self.color { 0 } else { 1 }][coord.to_index() as usize]
+                PAWN_SCORE[if self.color { 1 } else { 0 }][coord.to_index() as usize]
             }
             PieceEnum::Knight => {
-                KNIGHT_SCORE[if turn == self.color { 0 } else { 1 }][coord.to_index() as usize]
+                KNIGHT_SCORE[if self.color { 1 } else { 0 }][coord.to_index() as usize]
             }
             PieceEnum::Bishop => {
-                BISHOP_SCORE[if turn == self.color { 0 } else { 1 }][coord.to_index() as usize]
+                BISHOP_SCORE[if self.color { 1 } else { 0 }][coord.to_index() as usize]
             }
             PieceEnum::Rook => {
-                ROOK_SCORE[if turn == self.color { 0 } else { 1 }][coord.to_index() as usize]
+                ROOK_SCORE[if self.color { 1 } else { 0 }][coord.to_index() as usize]
             }
             PieceEnum::Queen => {
-                QUEEN_SCORE[if turn == self.color { 0 } else { 1 }][coord.to_index() as usize]
+                QUEEN_SCORE[if self.color { 1 } else { 0 }][coord.to_index() as usize]
             }
             PieceEnum::King => {
-                KING_SCORE[if turn == self.color { 0 } else { 1 }][coord.to_index() as usize]
+                KING_SCORE[if self.color { 1 } else { 0 }][coord.to_index() as usize]
             }
         }
     }
@@ -158,5 +158,11 @@ impl Piece {
 
     pub fn is_king(&self) -> bool {
         self.piece == PieceEnum::King
+    }
+}
+
+impl std::fmt::Display for Piece {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.to_char())
     }
 }

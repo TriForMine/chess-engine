@@ -1,4 +1,4 @@
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub struct Coord {
     pub x: u8,
     pub y: u8,
@@ -21,16 +21,21 @@ impl Coord {
             return None;
         }
 
-        let x = s.chars().nth(0)?.to_digit(10)? as u8;
-        let y = s.chars().nth(1)?.to_digit(10)? as u8;
+        let x = s.chars().nth(0).unwrap() as u8 - 97;
+        let y = s.chars().nth(1).unwrap() as u8 - 49;
 
         Some(Coord::new(x, y))
     }
 
     pub fn to_str(&self) -> String {
+        // Should be wither letter and number
+        // We can use the ASCII table to convert
+
         let mut s = String::new();
-        s.push((self.x + 49) as char);
+
+        s.push((self.x + 97) as char);
         s.push((self.y + 49) as char);
+
         s
     }
 

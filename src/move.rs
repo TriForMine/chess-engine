@@ -30,40 +30,50 @@ impl Move {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Move> {
-        if s.len() != 4 && s.len() != 5 {
-            return None;
+    pub fn is_capture(&self) -> bool {
+        self.capture
+    }
+
+    pub fn from_str(s: &str) -> Move {
+        let from = Coord::from_str(&s[0..2]).unwrap();
+        let to = Coord::from_str(&s[2..4]).unwrap();
+
+        let mut capture = false;
+        let mut promotion = false;
+
+        if s.len() == 5 {
+            if s.chars().nth(4).unwrap() == 'q' {
+                promotion = true;
+            } else {
+                capture = true;
+            }
+        } else if s.len() == 6 {
+            capture = true;
+            promotion = true;
         }
 
-        let from = Coord::from_str(&s[0..2])?;
-        let to = Coord::from_str(&s[2..4])?;
-        let piece = Piece::from_char(s.chars().nth(4)?)?;
-
-        Some(Move::new(from, to, false, false))
+        Move::new(from, to, capture, promotion)
     }
 
     pub fn to_str(&self) -> String {
-        let mut s = String::new();
-        s.push_str(&self.from.to_str());
-        s.push_str(&self.to.to_str());
+        let mut s = format!("{}{}", self.from.to_str(), self.to.to_str());
+
+        if self.promotion {
+            s.push('q');
+        }
+
         s
     }
 }
 
 impl Debug for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        s.push_str(&self.from.to_str());
-        s.push_str(&self.to.to_str());
-        write!(f, "{}", s)
+        write!(f, "{}", self.to_str())
     }
 }
 
 impl Display for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        s.push_str(&self.from.to_str());
-        s.push_str(&self.to.to_str());
-        write!(f, "{}", s)
+        write!(f, "{}", self.to_str())
     }
 }

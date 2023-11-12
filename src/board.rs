@@ -9,12 +9,28 @@ use crate::r#move::Move;
 use colored::Colorize;
 use std::fmt::Display;
 
+#[derive(Clone, Copy, PartialEq)]
+pub struct CheckState {
+    pub is_check: bool,
+    pub is_checkmate: bool,
+    pub is_stalemate: bool,
+    pub is_draw: bool,
+}
+
+#[derive(Clone)]
+pub struct MoveWithCapture {
+    pub m: Move,
+    pub captured: Option<Piece>,
+}
+
 #[derive(Clone)]
 pub struct Board {
     pub white: OneSideBoard,
     pub black: OneSideBoard,
     pub turn: bool,
-    pub previous_fen: Option<String>,
+    past_moves: Vec<MoveWithCapture>,
+
+    pub check_states: [CheckState; 2],
 }
 
 #[derive(Clone)]
@@ -32,7 +48,21 @@ impl Board {
             white: OneSideBoard::new(true),
             black: OneSideBoard::new(false),
             turn: true,
-            previous_fen: None,
+            past_moves: Vec::new(),
+            check_states: [
+                CheckState {
+                    is_check: false,
+                    is_checkmate: false,
+                    is_stalemate: false,
+                    is_draw: false,
+                },
+                CheckState {
+                    is_check: false,
+                    is_checkmate: false,
+                    is_stalemate: false,
+                    is_draw: false,
+                },
+            ],
         }
     }
 
@@ -59,7 +89,7 @@ impl Board {
             PieceEnum::King => generate_king_moves(self, coord, piece.is_white()),
         };
 
-        if piece.is_white() == self.turn && self.is_check(self.turn) {
+        if piece.is_white() == self.turn && self.check_states[self.turn as usize].is_check {
             filter_check_moves(self, moves)
         } else {
             moves
@@ -87,47 +117,97 @@ impl Board {
     }
 
     pub fn make_move(&mut self, m: Move) {
-        let piece = self.get_piece(m.from).unwrap();
-        self.unset_piece(m.from, piece);
-
+        let src_piece = self.get_piece(m.from).unwrap();
         let captured_piece = self.get_piece(m.to);
-        if let Some(captured_piece) = captured_piece {
-            self.unset_piece(m.to, captured_piece);
+
+        self.unset_piece(m.from, src_piece);
+
+        if let Some(captured) = captured_piece {
+            self.unset_piece(m.to, captured);
         }
 
-        self.set_piece(m.to, piece);
+        self.set_piece(m.to, src_piece);
+
+        self.past_moves.push(MoveWithCapture {
+            m,
+            captured: captured_piece,
+        });
         self.turn = !self.turn;
+
+        self.update_flags();
+    }
+
+    pub fn undo_move(&mut self, m: Move) {
+        if let Some(move_with_capture) = self.past_moves.pop() {
+            assert_eq!(m, move_with_capture.m);
+
+            let moved_piece = self.get_piece(m.to).unwrap();
+            self.unset_piece(m.to, moved_piece);
+            self.set_piece(m.from, moved_piece);
+
+            if let Some(captured) = move_with_capture.captured {
+                self.set_piece(m.to, captured);
+            }
+
+            self.turn = !self.turn;
+
+            self.update_flags();
+        } else {
+            eprintln!("No moves to undo");
+        }
+    }
+
+    pub fn update_flags(&mut self) {
+        let moves = self.get_all_moves();
+        let is_empty = moves.is_empty();
+
+        self.check_states[self.turn as usize].is_check = self.calculate_is_check(self.turn);
+        self.check_states[self.turn as usize].is_checkmate =
+            self.calculate_is_checkmate(self.turn, is_empty);
+        self.check_states[self.turn as usize].is_stalemate =
+            self.calculate_is_stalemate(self.turn, is_empty);
+        self.check_states[self.turn as usize].is_draw = self.calculate_is_draw(self.turn);
+    }
+
+    pub fn calculate_is_check(&self, color: bool) -> bool {
+        if let Some(king_coord) = self.get_piece_index_coord(5, color) {
+            let enemy_moves = self.get_all_enemy_moves();
+            enemy_moves.iter().any(|m| m.to == king_coord)
+        } else {
+            true
+        }
+    }
+
+    pub fn calculate_is_checkmate(&self, color: bool, is_empty: bool) -> bool {
+        self.check_states[color as usize].is_check && is_empty
+    }
+
+    pub fn calculate_is_stalemate(&self, color: bool, is_empty: bool) -> bool {
+        !self.check_states[color as usize].is_check && is_empty
+    }
+
+    pub fn calculate_is_draw(&self, color: bool) -> bool {
+        self.check_states[color as usize].is_stalemate || self.check_states[color as usize].is_draw
     }
 
     pub fn is_check(&self, color: bool) -> bool {
-        if let Some(king_coord) = self.get_piece_index_coord(PieceEnum::King.to_index()) {
-            let enemy_moves = self.get_all_color_moves(!color);
-            for m in enemy_moves {
-                if m.to == king_coord {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        true
+        self.check_states[color as usize].is_check
     }
 
     pub fn is_checkmate(&self, color: bool) -> bool {
-        self.is_check(color) && self.get_all_moves().is_empty()
+        self.check_states[color as usize].is_checkmate
     }
 
     pub fn is_stalemate(&self, color: bool) -> bool {
-        !self.is_check(color) && self.get_all_moves().is_empty()
+        self.check_states[color as usize].is_stalemate
     }
 
     pub fn is_draw(&self, color: bool) -> bool {
-        self.is_stalemate(color) || self.is_checkmate(color)
+        self.check_states[color as usize].is_draw
     }
 
     pub fn is_game_over(&self) -> bool {
-        self.is_draw(true) || self.is_draw(false)
+        self.is_checkmate(self.turn) || self.is_stalemate(self.turn)
     }
 
     pub fn evaluate(&self) -> i16 {
@@ -135,10 +215,13 @@ impl Board {
 
         for i in 0..64 {
             let coord = Coord::from_index(i);
-            if self.has_piece(coord) {
-                let piece = self.get_piece(coord).unwrap();
 
-                score += piece.get_score(coord, self.turn);
+            if let Some(piece) = self.get_piece(coord) {
+                if piece.is_white() {
+                    score += piece.get_score(coord);
+                } else {
+                    score -= piece.get_score(coord);
+                }
             }
         }
 
@@ -155,8 +238,12 @@ impl Board {
         self.get_current_player().get_piece_index(index)
     }
 
-    pub fn get_piece_index_coord(&self, index: u8) -> Option<Coord> {
-        self.get_current_player().get_piece_index_coord(index)
+    pub fn get_piece_index_coord(&self, index: u8, color: bool) -> Option<Coord> {
+        if color {
+            self.white.get_piece_index_coord(index)
+        } else {
+            self.black.get_piece_index_coord(index)
+        }
     }
 
     pub fn get_piece_bitboard(&self, color: bool) -> BitBoard {
@@ -256,6 +343,9 @@ impl Board {
     }
 
     pub fn to_fen(&self) -> String {
+        let is_checkmate = self.is_checkmate(self.turn);
+        let is_stalemate = self.is_stalemate(self.turn);
+
         let mut fen = String::with_capacity(50);
         for rank in (0..8).rev() {
             let mut empty = 0;
@@ -380,5 +470,19 @@ impl OneSideBoard {
 
     pub fn has_piece(&self, coord: Coord) -> bool {
         self.all_pieces.get(coord)
+    }
+}
+
+#[cfg(test)]
+// Test evaluation
+
+mod tests {
+    use super::*;
+    use crate::r#move::Move;
+
+    #[test]
+    fn test_score() {
+        let board = Board::new_game();
+        assert_eq!(board.evaluate(), 0);
     }
 }

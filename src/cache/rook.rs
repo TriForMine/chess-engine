@@ -6,7 +6,7 @@ pub fn get_rook_moves(rook_bitboard: BitBoard, blockers: BitBoard) -> BitBoard {
 
     let mut up = rook_bitboard;
     while up.get_rank() < 7 {
-        up = up.shift_up();
+        up.shift_up();
         moves |= up;
         if up & blockers != EMPTY {
             break;
@@ -15,7 +15,7 @@ pub fn get_rook_moves(rook_bitboard: BitBoard, blockers: BitBoard) -> BitBoard {
 
     let mut down = rook_bitboard;
     while down.get_rank() > 0 {
-        down = down.shift_down();
+        down.shift_down();
         moves |= down;
         if down & blockers != EMPTY {
             break;
@@ -24,7 +24,7 @@ pub fn get_rook_moves(rook_bitboard: BitBoard, blockers: BitBoard) -> BitBoard {
 
     let mut right = rook_bitboard;
     while right.get_file() < 7 {
-        right = right.shift_right();
+        right.shift_right();
         moves |= right;
         if right & blockers != EMPTY {
             break;
@@ -33,7 +33,7 @@ pub fn get_rook_moves(rook_bitboard: BitBoard, blockers: BitBoard) -> BitBoard {
 
     let mut left = rook_bitboard;
     while left.get_file() > 0 {
-        left = left.shift_left();
+        left.shift_left();
         moves |= left;
         if left & blockers != EMPTY {
             break;
