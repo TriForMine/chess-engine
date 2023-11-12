@@ -55,9 +55,14 @@ impl Engine {
         let mut alpha = alpha;
         let mut max = -9999;
 
+        let key = (self.board.to_fen(), depth);
+        if let Some(value) = self.tt.get(&key) {
+            return value;
+        }
+
         for m in self.get_all_moves() {
             let fen = self.board.to_fen();
-            self.board.make_move(m); // Changing the actual board state
+            self.board.make_move(m);
 
             let score = -self.negamax(depth - 1, -beta, -alpha);
 
@@ -70,6 +75,10 @@ impl Engine {
                 break;
             }
         }
+
+        // Store the result in the transposition table
+        self.tt.set(key, max);
+
         max
     }
 
